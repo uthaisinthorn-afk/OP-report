@@ -195,6 +195,146 @@ const TECH_CHECKLISTS = {
       { key:"fullLoadAmp", title:"Full Load Amp.", range:"100", unit:"%" },
       { key:"oilPumpLevel", title:"Oil Pump Level (Hi-Med-Lo)", range:"Mid-Hi", unit:"Level" }
     ]}
+  ],
+
+  "Cooling Tower": [
+    { section: "Cooling Tower", items: [
+      { key:"ph", title:"pH", range:"6.5-8.5", unit:"pH" },
+      { key:"conductivity", title:"Conductivity", range:"≤2,000", unit:"μS/cm" }
+    ]}
+  ],
+
+  "Uninterruptible Power Supply": [
+    { section: "UPS", items: [
+      { key:"outputVoltage", title:"Output Voltage (VL-L)", range:"-", unit:"V" },
+      { key:"outputCurrent", title:"Output Current (IL-L)", range:"-", unit:"A" },
+      { key:"load", title:"Load", range:"-", unit:"%" },
+      { key:"freq", title:"Frequency", range:"50", unit:"Hz" },
+      { key:"roomTemp", title:"Room Temp.", range:"22-24", unit:"°C" }
+    ]}
+  ],
+
+  "Passenger Lift": [
+    { section: "Lift", items: [
+      { key:"noise", title:"เสียงผิดปกติขณะทำงาน", range:"ไม่มี", unit:"-" },
+      { key:"doorOp", title:"การเปิด-ปิดประตู", range:"ปกติ", unit:"-" },
+      { key:"roomTemp", title:"อุณหภูมิห้องเครื่อง", range:"22-26", unit:"°C" },
+      { key:"equipComplete", title:"อุปกรณ์ประจำเครื่องครบถ้วน", range:"ครบ", unit:"-" }
+    ]}
+  ],
+  "Dumb Waiter Lift": [
+    { section: "Lift", items: [
+      { key:"noise", title:"เสียงผิดปกติขณะทำงาน", range:"ไม่มี", unit:"-" },
+      { key:"doorOp", title:"การเปิด-ปิดประตู", range:"ปกติ", unit:"-" },
+      { key:"roomTemp", title:"อุณหภูมิห้องเครื่อง", range:"22-26", unit:"°C" },
+      { key:"equipComplete", title:"อุปกรณ์ประจำเครื่องครบถ้วน", range:"ครบ", unit:"-" }
+    ]}
+  ],
+  "Escalator": [
+    { section: "Escalator", items: [
+      { key:"noise", title:"เสียงผิดปกติขณะทำงาน", range:"ไม่มี", unit:"-" },
+      { key:"handrail", title:"สภาพราวจับ/ขั้นบันได", range:"ปกติ", unit:"-" },
+      { key:"emergencyStop", title:"ปุ่มหยุดฉุกเฉิน", range:"ใช้งานได้", unit:"-" }
+    ]}
+  ],
+
+  "Engine Fire Pump": [
+    { section: "Fire Pump", items: [
+      { key:"mode", title:"โหมดการทำงาน (Auto/Manual)", range:"Auto", unit:"-" },
+      { key:"pressure", title:"แรงดันน้ำ", range:"≤240", unit:"psi" },
+      { key:"fuelLevel", title:"ปริมาณน้ำมันเชื้อเพลิง", range:">1,320", unit:"L" },
+      { key:"waterLevel", title:"ปริมาณน้ำในถังใต้ดิน", range:">1,200", unit:"m³" }
+    ]}
+  ],
+  "Jockey Pump": [
+    { section: "Jockey Pump", items: [
+      { key:"mode", title:"โหมดการทำงาน (Auto/Manual)", range:"Auto", unit:"-" },
+      { key:"pressure", title:"แรงดันน้ำ", range:"≤240", unit:"psi" },
+      { key:"startStop", title:"แรงดัน Start/Stop", range:"ตามสเปกปั๊ม", unit:"psi" }
+    ]}
+  ],
+  "Cold Water Transfer Pump (PC)": [
+    { section: "Cold Water Pump", items: [
+      { key:"mode", title:"โหมดการทำงาน (Auto/Manual)", range:"Auto", unit:"-" },
+      { key:"pressure", title:"แรงดันน้ำ", range:"≤240", unit:"psi" },
+      { key:"status", title:"สถานะการทำงาน", range:"ปกติ (N)", unit:"-" }
+    ]}
+  ],
+
+  "Hot Water Pump": [
+    { section: "Heat Pump", items: [
+      { key:"controller", title:"Controller", range:"Auto", unit:"-" },
+      { key:"leavingTemp", title:"Leaving Temp.", range:"50-70", unit:"°C" },
+      { key:"enteringTemp", title:"Entering Temp.", range:"20-40", unit:"°C" },
+      { key:"statusLamp", title:"Status Lamp", range:"Green (Run)", unit:"-" }
+    ]}
+  ],
+
+  "Neutralization Pump": [
+    { section: "Waste Water", items: [
+      { key:"selector", title:"Selector Switch", range:"Auto", unit:"-" },
+      { key:"status", title:"สถานะการทำงาน", range:"Start/Stop ปกติ", unit:"-" },
+      { key:"general", title:"สภาพทั่วไป", range:"N (ปกติ)", unit:"-" }
+    ]}
+  ],
+  "Sewage Pump": [
+    { section: "Waste Water", items: [
+      { key:"selector", title:"Selector Switch", range:"Auto", unit:"-" },
+      { key:"status", title:"สถานะการทำงาน", range:"Start/Stop ปกติ", unit:"-" },
+      { key:"general", title:"สภาพทั่วไป", range:"N (ปกติ)", unit:"-" }
+    ]}
+  ],
+  "Submersible Drainage Pump": [
+    { section: "Waste Water", items: [
+      { key:"selector", title:"Selector Switch", range:"Auto", unit:"-" },
+      { key:"status", title:"สถานะการทำงาน", range:"Start/Stop ปกติ", unit:"-" },
+      { key:"general", title:"สภาพทั่วไป", range:"N (ปกติ)", unit:"-" }
+    ]}
+  ],
+  "Submersible Sewage Pump": [
+    { section: "Waste Water", items: [
+      { key:"selector", title:"Selector Switch", range:"Auto", unit:"-" },
+      { key:"status", title:"สถานะการทำงาน", range:"Start/Stop ปกติ", unit:"-" },
+      { key:"general", title:"สภาพทั่วไป", range:"N (ปกติ)", unit:"-" }
+    ]}
+  ],
+
+  "Medical Air": [
+    { section: "Compressed Air System", items: [
+      { key:"pressure", title:"Pressure (MA/IA)", range:"90-110 (MA) / 170-220 (IA High)", unit:"psi" },
+      { key:"dewPoint", title:"Dew Point Temp.", range:"<1.7", unit:"°C" }
+    ]}
+  ],
+  "Vacuum Pump": [
+    { section: "Vacuum System", items: [
+      { key:"vacuumPressure", title:"Vacuum Pressure", range:"-20 ถึง -30", unit:"inHg" }
+    ]}
+  ],
+  "Nitrous Oxide Control System": [
+    { section: "Nitrous Oxide", items: [
+      { key:"linePressure", title:"Line Pressure", range:"2,000", unit:"psi" },
+      { key:"workingPressure", title:"Working Pressure", range:"50-55", unit:"psi" },
+      { key:"rackInUse", title:"Rack ที่ใช้งาน (L/R)", range:"-", unit:"-" }
+    ]}
+  ],
+  "Carbon dioxide": [
+    { section: "Carbon Dioxide", items: [
+      { key:"linePressure", title:"Line Pressure", range:"2,000", unit:"psi" },
+      { key:"workingPressure", title:"Working Pressure", range:"50-55", unit:"psi" },
+      { key:"rackInUse", title:"Rack ที่ใช้งาน (L/R)", range:"-", unit:"-" }
+    ]}
+  ],
+  "Oxygen Control System": [
+    { section: "Oxygen Manifold", items: [
+      { key:"linePressure", title:"Line Pressure", range:"2,000", unit:"psi" },
+      { key:"workingPressure", title:"Working Pressure", range:"80-90", unit:"psi" },
+      { key:"rackInUse", title:"Rack ที่ใช้งาน (L/R)", range:"-", unit:"-" }
+    ]},
+    { section: "Liquid Oxygen", items: [
+      { key:"liquidLevel", title:"Liquid Level", range:"-", unit:"inch" },
+      { key:"pressureHigh", title:"Pressure High Zone", range:"50-55", unit:"psi" },
+      { key:"pressureLow", title:"Pressure Low Zone", range:"50-55", unit:"psi" }
+    ]}
   ]
 };
 
