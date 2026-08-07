@@ -103,6 +103,14 @@
   }
   .browse-note{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:12.5px;color:var(--muted);margin-top:14px;text-align:center;}
   .scan-now-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .tech-section{margin-top:18px;margin-bottom:6px;font-size:13.5px;font-weight:800;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:6px;}
+  .tech-section:first-of-type{margin-top:4px;}
+  .tech-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+  .tech-row .tinfo{flex:1;min-width:0;}
+  .tech-row .ttitle{font-size:12.5px;font-weight:600;}
+  .tech-row .trange{font-size:10.5px;color:var(--muted);margin-top:1px;}
+  .tech-row input{width:90px;flex-shrink:0;padding:8px;text-align:right;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .tech-row .tunit{width:44px;flex-shrink:0;font-size:11.5px;color:var(--muted);}
   .toggle-pair{display:flex;gap:8px;margin-bottom:4px;}
   .tbtn{flex:1;padding:12px 8px;border-radius:8px;border:2px solid var(--line);background:var(--panel);color:var(--muted);font-size:13.5px;font-weight:800;cursor:pointer;transition:all .15s;}
   .tbtn.ok.active{background:#1c9c63;border-color:#1c9c63;color:#fff;box-shadow:0 0 0 3px rgba(28,156,99,.25);}
@@ -150,6 +158,45 @@ const CAT_META = {
 let allMachines = [];
 let currentCategory = null;
 let opStaffList = [];
+
+// รายการตรวจเช็กเทคนิคเฉพาะทาง — ดึงจากฟอร์ม Chiller Plant Daily Inspection
+// Record ของจริง ใช้แทนฟอร์มทั่วไป (ความสะอาด/เสียง/การทำงาน) เมื่อชื่อ
+// เครื่องจักรตรงกับที่กำหนดไว้ในนี้ — เพิ่มเครื่องอื่นได้ทีหลังโดยเพิ่ม key
+// ใหม่ในอ็อบเจ็กต์นี้ ไม่ต้องแก้โครงสร้างโค้ดส่วนอื่น
+const TECH_CHECKLISTS = {
+  "Chiller Water Cool": [
+    { section: "Evaporator", items: [
+      { key:"setPointTemp", title:"Set Point Temp.", range:"-", unit:"°F" },
+      { key:"leavingChillerTemp", title:"Leaving Chiller Liquid Temp.", range:"44-45", unit:"°F" },
+      { key:"returnChillerTemp", title:"Return Chiller Liquid Temp.", range:"50-60", unit:"°F" },
+      { key:"evapSatRefTemp", title:"Evaporator Saturation Ref. Temp.", range:"35-47", unit:"°F" },
+      { key:"smallTempDiffEvap", title:"Small Temp. Difference", range:"<4", unit:"°F" },
+      { key:"leavingChilledPressure", title:"Leaving Chilled Pressure", range:"150-250", unit:"psig" },
+      { key:"returnChilledPressure", title:"Return Chilled Pressure", range:"150-250", unit:"psig" },
+      { key:"pressureDropEvap", title:"Pressure drop flow rate", range:"5", unit:"psig" },
+      { key:"refrigerantPressureEvap", title:"Refrigerant Pressure", range:"35-47", unit:"psig" }
+    ]},
+    { section: "Condenser", items: [
+      { key:"leavingCondTemp", title:"Leaving Condenser Liquid Temp.", range:"95-100", unit:"°F" },
+      { key:"returnCondTemp", title:"Return Condenser Liquid Temp.", range:"85-95", unit:"°F" },
+      { key:"condSatRefTemp", title:"Condenser Saturation Ref. Temp.", range:"90-110", unit:"°F" },
+      { key:"smallTempDiffCond", title:"Small Temp. Difference", range:"<5", unit:"°F" },
+      { key:"leavingCondPressure", title:"Leaving Condenser Pressure", range:"35-50", unit:"psig" },
+      { key:"returnCondPressure", title:"Return Condenser Pressure", range:"40-60", unit:"psig" },
+      { key:"pressureDropCond", title:"Pressure Drop Flow Rate", range:"13", unit:"psig" },
+      { key:"refrigerantPressureCond", title:"Refrigerant Pressure", range:"<160", unit:"psig" }
+    ]},
+    { section: "Compressor & Motor", items: [
+      { key:"runningHours", title:"Running Hours", range:"-", unit:"Hour" },
+      { key:"oilPressure", title:"Oil Pressure", range:"34-35", unit:"psig" },
+      { key:"oilSumpTemp", title:"Oil Sump Temp.", range:"110-145", unit:"°F" },
+      { key:"dischargeTemp", title:"Discharge Temp.", range:"100-145", unit:"°F" },
+      { key:"phaseCurrent", title:"Phase Current", range:"-", unit:"A" },
+      { key:"fullLoadAmp", title:"Full Load Amp.", range:"100", unit:"%" },
+      { key:"oilPumpLevel", title:"Oil Pump Level (Hi-Med-Lo)", range:"Mid-Hi", unit:"Level" }
+    ]}
+  ]
+};
 
 function showToast(msg, kind){
   const el = document.getElementById("toast");
@@ -333,16 +380,26 @@ function renderCheckSheet(category, name, verified){
   const m = allMachines.find(x=>x.category===category && x.name===name);
   const meta = CAT_META[category] || { code:"?", color:"#888" };
   const lastRecorder = localStorage.getItem('op_last_recorder') || "";
+  const techSections = TECH_CHECKLISTS[name] || null;
 
-  app.innerHTML = `
-    <a class="back-link" id="backLink">← เลือกหมวดอื่น</a>
-    ${verified ? `<div class="verified-badge">✅ ยืนยันจากการสแกน QR หน้าเครื่อง</div>` : ""}
-    <div class="section-title" style="display:flex;align-items:center;gap:10px;">
-      <span class="badge2" style="width:28px;height:28px;font-size:10px;background:${meta.color}">${meta.code}</span>
-      ${name}
-    </div>
-    <div style="color:var(--muted);font-size:12px;margin:-8px 0 16px;">${category.replace(/^หมวดที่ \d+\s*/, "")} · พร้อมใช้ ${m.ready}/${m.total}</div>
+  const unitFieldHtml = (m.total > 1) ? `
+    <label>หมายเลขเครื่อง (ถ้ามี)</label>
+    <input type="text" id="unitInput" placeholder="เช่น CH-1">
+  ` : "";
 
+  const bodyHtml = techSections ? techSections.map(sec => `
+    <div class="tech-section">${sec.section}</div>
+    ${sec.items.map(item => `
+      <div class="tech-row">
+        <div class="tinfo">
+          <div class="ttitle">${item.title}</div>
+          <div class="trange">เกณฑ์: ${item.range}</div>
+        </div>
+        <input type="text" id="tech_${item.key}" inputmode="decimal">
+        <div class="tunit">${item.unit}</div>
+      </div>
+    `).join("")}
+  `).join("") : `
     <label>ความสะอาด</label>
     <div class="toggle-pair" id="tp_cleanliness">
       <button type="button" class="tbtn ok" data-field="cleanliness" data-val="ปกติ">ปกติ</button>
@@ -358,6 +415,19 @@ function renderCheckSheet(category, name, verified){
       <button type="button" class="tbtn ok" data-field="testRun" data-val="ปกติ">ปกติ</button>
       <button type="button" class="tbtn bad" data-field="testRun" data-val="ผิดปกติ">ผิดปกติ</button>
     </div>
+  `;
+
+  app.innerHTML = `
+    <a class="back-link" id="backLink">← เลือกหมวดอื่น</a>
+    ${verified ? `<div class="verified-badge">✅ ยืนยันจากการสแกน QR หน้าเครื่อง</div>` : ""}
+    <div class="section-title" style="display:flex;align-items:center;gap:10px;">
+      <span class="badge2" style="width:28px;height:28px;font-size:10px;background:${meta.color}">${meta.code}</span>
+      ${name}
+    </div>
+    <div style="color:var(--muted);font-size:12px;margin:-8px 0 16px;">${category.replace(/^หมวดที่ \d+\s*/, "")} · พร้อมใช้ ${m.ready}/${m.total}</div>
+
+    ${unitFieldHtml}
+    ${bodyHtml}
 
     <label style="margin-top:18px;">สถานะโดยรวม</label>
     <div class="toggle-pair" id="tp_overall">
@@ -403,15 +473,27 @@ function renderCheckSheet(category, name, verified){
     });
   });
 
-  document.getElementById("submitCheckBtn").addEventListener("click", ()=> submitCheckSheet(category, name, fieldState));
+  document.getElementById("submitCheckBtn").addEventListener("click", ()=> submitCheckSheet(category, name, fieldState, techSections));
 }
 
-async function submitCheckSheet(category, name, fieldState){
+async function submitCheckSheet(category, name, fieldState, techSections){
   const selectEl = document.getElementById("inspectorSelect");
   const inspector = selectEl.value === "__other__"
     ? document.getElementById("inspectorOther").value.trim()
     : selectEl.value;
-  if (!fieldState.cleanliness || !fieldState.noise || !fieldState.testRun){ showToast("กรุณาเลือกผลตรวจให้ครบทุกข้อ", "err"); return; }
+
+  let techReadings = null;
+  if (techSections){
+    techReadings = [];
+    for (const sec of techSections){
+      for (const item of sec.items){
+        const el = document.getElementById("tech_"+item.key);
+        techReadings.push({ section: sec.section, key: item.key, title: item.title, range: item.range, unit: item.unit, value: el.value.trim() });
+      }
+    }
+  } else {
+    if (!fieldState.cleanliness || !fieldState.noise || !fieldState.testRun){ showToast("กรุณาเลือกผลตรวจให้ครบทุกข้อ", "err"); return; }
+  }
   if (!fieldState.overall){ showToast("กรุณาเลือกสถานะโดยรวม", "err"); return; }
   if (!inspector){ showToast("กรุณาระบุชื่อผู้ตรวจ", "err"); return; }
   let detail = "", vendor = "", qty = 1;
@@ -423,14 +505,18 @@ async function submitCheckSheet(category, name, fieldState){
   }
   localStorage.setItem("op_last_recorder", inspector);
 
+  const unitEl = document.getElementById("unitInput");
+  const unitNumber = unitEl ? unitEl.value.trim() : "";
+
   const btn = document.getElementById("submitCheckBtn");
   btn.disabled = true; btn.textContent = "กำลังบันทึก...";
   try{
     const resp = await fetch(CONFIG.GAS_URL, {
       method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
       body: JSON.stringify({
-        action:"machine_checksheet", category, name,
-        cleanliness: fieldState.cleanliness, noise: fieldState.noise, testRun: fieldState.testRun,
+        action:"machine_checksheet", category, name, unitNumber,
+        cleanliness: fieldState.cleanliness || "", noise: fieldState.noise || "", testRun: fieldState.testRun || "",
+        techReadings,
         overall: fieldState.overall, qty, detail, vendor, inspector
       })
     });
