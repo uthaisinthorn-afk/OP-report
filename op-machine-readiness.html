@@ -88,6 +88,11 @@
   .qr-overlay.show{display:flex;}
   .qr-overlay video{flex:1;width:100%;object-fit:cover;}
   .qr-overlay .scanHint{color:#fff;text-align:center;padding:14px;font-size:13.5px;}
+  .qr-guide{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:min(65vw,280px);height:min(65vw,280px);
+    border:3px solid #3fd38a;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.35);pointer-events:none;
+  }
   .qr-overlay .closeBtn{
     position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);color:#fff;
     border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;
@@ -116,10 +121,17 @@
 <div class="qr-overlay" id="qrOverlay">
   <button class="closeBtn" id="qrCloseBtn">✕</button>
   <video id="qrVideo" playsinline muted></video>
+  <div class="qr-guide"></div>
   <div class="scanHint" id="qrHint">ส่องกล้องไปที่ QR code หน้าเครื่อง</div>
 </div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+  // ถ้า CDN หลักโหลดไม่สำเร็จ (เช่นถูกบล็อก) ลอง CDN สำรองอัตโนมัติ
+  if (typeof jsQR !== "function"){
+    document.write('<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"><\/script>');
+  }
+</script>
 
 <script>
 const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycby145sVHKOvQUOvqMC7IogdlWeiVOAz6LVJCxMaePznS6hbHoBvFv_cbwJelW34blLtyA/exec" };
@@ -474,15 +486,29 @@ function stopQrScan(){
   document.getElementById("qrOverlay").classList.remove("show");
 }
 function scanFrame(){
+  if (!qrStream) return; // ผู้ใช้ปิดกล้องไปแล้ว หยุด loop
   const video = document.getElementById("qrVideo");
   if (!video.videoWidth){ qrRAF = requestAnimationFrame(scanFrame); return; }
-  const canvas = document.createElement("canvas");
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height);
-  if (code && code.data){ handleQrDecoded(code.data); return; }
+
+  if (typeof jsQR !== "function"){
+    // ตัวอ่าน QR โหลดจาก CDN ไม่สำเร็จ (เช่น เน็ตบล็อกโดเมนภายนอก) — เดิม
+    // โค้ดจะพังเงียบๆ ตรงนี้ ไม่ขึ้น error ให้เห็นเลย ตอนนี้แจ้งเตือนชัดเจนแทน
+    document.getElementById("qrHint").textContent = "⚠️ โหลดตัวอ่าน QR ไม่สำเร็จ (เช็คสัญญาณอินเทอร์เน็ต) ลองปิดแล้วเปิดใหม่ หรือรีเฟรชหน้าเว็บ";
+    return;
+  }
+
+  try{
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+    if (code && code.data){ handleQrDecoded(code.data); return; }
+  }catch(err){
+    console.error("QR scan frame error", err);
+    // ไม่ทำอะไรเพิ่ม ปล่อยให้ loop ทำงานต่อในรอบถัดไป กันสแกนค้างจาก error ชั่วคราว
+  }
   qrRAF = requestAnimationFrame(scanFrame);
 }
 function handleQrDecoded(text){
