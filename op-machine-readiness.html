@@ -5,63 +5,139 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ความพร้อมใช้งานเครื่องจักร</title>
 <style>
-  :root{ --navy:#0e2a3d; --teal:#0f7a72; --green:#1c9c63; --amber:#c9821a; --red:#c0392b; --line:#e4e4e0; --muted:#6b7178; --bg:#f6f6f2; }
+  :root{
+    --bg:#0e1015; --panel:#1a1d26; --panel2:#20232e; --line:#2b2f3b;
+    --text:#f2f3f5; --muted:#8b90a0; --amber:#f0b429; --red:#e5533c; --green:#1c9c63;
+  }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:"Sarabun","Tahoma",sans-serif;background:var(--bg);color:var(--navy);}
-  .topbar{background:var(--navy);color:#fff;padding:16px 18px;}
-  .topbar h1{font-size:16px;margin:0 0 2px;}
-  .topbar a{color:#fff;opacity:.75;font-size:12px;text-decoration:none;}
+  body{margin:0;font-family:"Sarabun","Tahoma",sans-serif;background:var(--bg);color:var(--text);}
+  .topbar{padding:16px 18px;border-bottom:1px solid var(--line);}
+  .topbar .eyebrow{font-size:10.5px;letter-spacing:.08em;color:var(--muted);font-weight:700;text-transform:uppercase;}
+  .topbar h1{font-size:19px;margin:4px 0 0;}
+  .topbar a{color:var(--muted);font-size:12px;text-decoration:none;}
   .wrap{max-width:640px;margin:0 auto;padding:16px;}
-  .summary{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-  .sumcard{flex:1;min-width:100px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
-  .sumcard .num{font-size:22px;font-weight:800;}
-  .sumcard .label{font-size:11px;color:var(--muted);}
-  .sumcard.issue .num{color:var(--red);}
-  input[type="text"]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;margin-bottom:14px;font-family:inherit;}
-  .cat-title{font-size:13.5px;font-weight:800;margin:18px 0 8px;color:var(--muted);}
-  .cat-title:first-child{margin-top:0;}
+
+  .strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px;-webkit-overflow-scrolling:touch;}
+  .strip::-webkit-scrollbar{height:4px;}
+  .strip-card{
+    flex:0 0 auto;min-width:92px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;cursor:pointer;
+  }
+  .strip-card .num{font-size:20px;font-weight:800;color:var(--amber);}
+  .strip-card .lbl{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;}
+
+  input[type="text"]{
+    width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);
+    color:var(--text);font-size:14px;font-family:inherit;margin-bottom:14px;
+  }
+  input[type="text"]::placeholder{color:var(--muted);}
+
+  .cat-row{
+    display:flex;align-items:center;gap:14px;background:var(--panel);border-radius:12px;
+    padding:14px 16px;margin-bottom:10px;cursor:pointer;border-left:4px solid var(--accent,#555);
+  }
+  .badge2{
+    flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--accent,#555);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0e1015;
+  }
+  .cat-info{flex:1;min-width:0;}
+  .cat-name{font-size:14.5px;font-weight:700;}
+  .cat-sub{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .cat-right{text-align:right;flex-shrink:0;}
+  .cat-count{font-size:16px;font-weight:800;}
+  .cat-count-lbl{font-size:10.5px;color:var(--muted);}
+  .cat-issue{font-size:10.5px;color:var(--red);font-weight:700;margin-top:2px;}
+
   .mrow{
-    background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;
+    background:var(--panel);border-radius:12px;padding:13px 15px;margin-bottom:8px;
     display:flex;justify-content:space-between;align-items:center;cursor:pointer;
   }
   .mrow .name{font-size:13.5px;font-weight:700;}
   .mrow .qty{font-size:11.5px;color:var(--muted);margin-top:2px;}
-  .badge{font-size:12px;font-weight:800;border-radius:999px;padding:4px 12px;white-space:nowrap;}
-  .badge.full{background:#e3f6ea;color:var(--green);}
-  .badge.partial{background:#fdf1e3;color:var(--amber);}
+  .pill{font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 12px;white-space:nowrap;}
+  .pill.full{background:rgba(28,156,99,.18);color:#3fd38a;}
+  .pill.partial{background:rgba(229,83,60,.18);color:#ff8266;}
 
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;z-index:50;}
+  .back-link{display:inline-block;margin-bottom:12px;color:var(--muted);font-size:13px;text-decoration:none;cursor:pointer;}
+  .section-title{font-size:15px;font-weight:800;margin-bottom:14px;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:50;}
   .modal-bg.show{display:flex;}
-  .modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow:auto;}
+  .modal{background:var(--panel2);border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:85vh;overflow:auto;}
   .modal h3{margin:0 0 2px;font-size:16px;}
   .modal .sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
-  .issue-card{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:10px;}
+  .issue-card{background:var(--panel);border-radius:10px;padding:12px;margin-bottom:10px;}
   .issue-card .detail{font-size:13px;margin-bottom:6px;}
   .issue-card .meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
   .close-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;}
-  label{display:block;font-size:12.5px;font-weight:700;margin:10px 0 5px;}
-  input[type="number"],textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;}
+  label{display:block;font-size:12.5px;font-weight:700;margin:10px 0 5px;color:var(--muted);}
+  input[type="number"],textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:var(--panel);color:var(--text);}
   textarea{min-height:60px;}
   .report-btn{width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:12px;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:14px;}
   .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
 
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;}
   .toast.show{opacity:1;}
-  .toast.err{background:var(--red);}
+  .toast.err{background:var(--red);border-color:var(--red);}
+
+  .scan-btn{
+    width:100%;background:linear-gradient(135deg,#0f7a72,#0a5850);color:#fff;border:none;border-radius:12px;
+    padding:14px;font-size:14.5px;font-weight:800;cursor:pointer;margin-bottom:16px;
+  }
+  .qr-overlay{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:70;}
+  .qr-overlay.show{display:flex;}
+  .qr-overlay video{flex:1;width:100%;object-fit:cover;}
+  .qr-overlay .scanHint{color:#fff;text-align:center;padding:14px;font-size:13.5px;}
+  .qr-overlay .closeBtn{
+    position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);color:#fff;
+    border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;
+  }
+  .verified-badge{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(28,156,99,.18);color:#3fd38a;
+    font-size:12px;font-weight:700;border-radius:999px;padding:5px 12px;margin-bottom:14px;
+  }
+  .browse-note{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:12.5px;color:var(--muted);margin-top:14px;text-align:center;}
+  .scan-now-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .toggle-pair{display:flex;gap:8px;margin-bottom:4px;}
+  .tbtn{flex:1;padding:11px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;}
+  .tbtn.active{background:rgba(255,255,255,.08);border-color:#666;color:var(--text);}
+  .tbtn.ok.active{background:rgba(28,156,99,.2);border-color:var(--green);color:#3fd38a;}
+  .tbtn.bad.active{background:rgba(229,83,60,.2);border-color:var(--red);color:#ff8266;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <h1>⚙️ ความพร้อมใช้งานเครื่องจักร</h1>
+  <div class="eyebrow">Preventive Maintenance</div>
+  <h1>ความพร้อมใช้งานเครื่องจักร</h1>
   <a href="op-home.html">← กลับหน้าแรก</a>
 </div>
 <div class="wrap" id="app"></div>
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="qr-overlay" id="qrOverlay">
+  <button class="closeBtn" id="qrCloseBtn">✕</button>
+  <video id="qrVideo" playsinline muted></video>
+  <div class="scanHint" id="qrHint">ส่องกล้องไปที่ QR code หน้าเครื่อง</div>
+</div>
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <script>
-const CONFIG = { GAS_URL: "" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
+const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycby145sVHKOvQUOvqMC7IogdlWeiVOAz6LVJCxMaePznS6hbHoBvFv_cbwJelW34blLtyA/exec" };
+
+// รหัส/สี/ชื่อภาษาอังกฤษของแต่ละหมวด (ปรับสี/รหัสได้ตามต้องการ)
+const CAT_META = {
+  "หมวดที่ 1 ระบบปรับอากาศและระบายอากาศ": { code:"HV", sub:"HVAC · HVAC", color:"#3b82f6" },
+  "หมวดที่ 2 ระบบไฟฟ้าและไฟฟ้าสื่อสาร": { code:"EL", sub:"Electrical · ELE", color:"#f0b429" },
+  "หมวดที่ 3 ระบบ Building Automation System (BAS)": { code:"BA", sub:"BAS · BAS", color:"#a78bfa" },
+  "หมวดที่ 4 ระบบสุขาภิบาล": { code:"SA", sub:"Sanitary · SAN", color:"#2dd4bf" },
+  "หมวดที่ 5 ระบบบ่อพักน้ำเสีย": { code:"WW", sub:"Wastewater · WWT", color:"#22d3ee" },
+  "หมวดที่ 6 ระบบป้องกันอัคคีภัย ดับเพลิงและรักษาความปลอดภัย": { code:"FA", sub:"Fire Alarm & Fighting · FAF", color:"#e5533c" },
+  "หมวดที่ 7 ระบบขนส่ง": { code:"TR", sub:"Transportation · TRN", color:"#818cf8" },
+  "หมวดที่ 8 ระบบแก๊สทางการแพทย์ และระบบแก๊ส LPG": { code:"MG", sub:"Medical Gas · MGS", color:"#ec4899" }
+};
+
 let allMachines = [];
+let currentCategory = null;
 
 function showToast(msg, kind){
   const el = document.getElementById("toast");
@@ -71,59 +147,132 @@ function showToast(msg, kind){
 }
 
 async function init(){
-  document.getElementById("app").innerHTML = "<p>⏳ กำลังโหลดข้อมูล...</p>";
-  if (!CONFIG.GAS_URL){ document.getElementById("app").innerHTML = "<p>⚠️ ยังไม่ได้ตั้งค่า GAS_URL ในไฟล์นี้</p>"; return; }
+  document.getElementById("app").innerHTML = "<p style='color:var(--muted)'>⏳ กำลังโหลดข้อมูล...</p>";
+  if (!CONFIG.GAS_URL){ document.getElementById("app").innerHTML = "<p>⚠️ ยังไม่ได้ตั้งค่า GAS_URL</p>"; return; }
   try{
     const resp = await fetch(CONFIG.GAS_URL + "?action=machines");
     allMachines = await resp.json();
-    render(allMachines);
+    const params = new URLSearchParams(location.search);
+    const cat = params.get("cat");
+    const name = params.get("name");
+    if (cat && name && allMachines.some(m=>m.category===cat && m.name===name)){
+      renderCheckSheet(cat, name, true); // true = มาจากการสแกน QR จริง (ยืนยันตัวตน)
+    } else {
+      renderCategoryPicker();
+    }
   }catch(e){
     document.getElementById("app").innerHTML = "<p>เชื่อมต่อไม่สำเร็จ ลองรีเฟรชอีกครั้ง</p>";
   }
 }
 
-function render(machines){
+function catsSummary(){
+  const cats = [...new Set(allMachines.map(m=>m.category))];
+  return cats.map(cat => {
+    const items = allMachines.filter(m=>m.category===cat);
+    const total = items.reduce((s,m)=>s+m.total,0);
+    const notReady = items.reduce((s,m)=>s+m.notReady,0);
+    return { cat, total, notReady, count: items.length };
+  });
+}
+
+function renderCategoryPicker(){
+  currentCategory = null;
   const app = document.getElementById("app");
-  const totalNotReady = machines.reduce((s,m)=>s+m.notReady, 0);
-  const totalAll = machines.reduce((s,m)=>s+m.total, 0);
-  const totalReady = totalAll - totalNotReady;
+  const summary = catsSummary();
+  const grandTotal = allMachines.reduce((s,m)=>s+m.total,0);
 
-  let html = `
-    <input type="text" id="searchBox" placeholder="ค้นหาชื่อเครื่องจักร...">
-    <div class="summary">
-      <div class="sumcard"><div class="num">${totalAll}</div><div class="label">ทั้งหมด</div></div>
-      <div class="sumcard"><div class="num" style="color:var(--green)">${totalReady}</div><div class="label">พร้อมใช้</div></div>
-      <div class="sumcard issue"><div class="num">${totalNotReady}</div><div class="label">ไม่พร้อมใช้</div></div>
+  const stripHtml = `
+    <div class="strip-card" style="border-color:#444;">
+      <div class="num">${grandTotal.toLocaleString()}</div>
+      <div class="lbl">ทั้งหมด</div>
     </div>
-  `;
+    ` + summary.map(s => {
+      const meta = CAT_META[s.cat] || { code:"?", color:"#888" };
+      return `
+      <div class="strip-card" data-cat="${s.cat}">
+        <div class="num" style="color:${meta.color}">${s.total.toLocaleString()}</div>
+        <div class="lbl">${meta.code}</div>
+      </div>
+    `; }).join("");
 
-  const cats = [...new Set(machines.map(m=>m.category))];
-  cats.forEach(cat => {
-    html += `<div class="cat-title">${cat}</div>`;
-    machines.filter(m=>m.category===cat).forEach(m => {
+  const listHtml = summary.map(s => {
+    const meta = CAT_META[s.cat] || { code:"?", sub:"", color:"#888" };
+    const nameOnly = s.cat.replace(/^หมวดที่ \d+\s*/, "");
+    return `
+      <div class="cat-row" data-cat="${s.cat}" style="--accent:${meta.color}">
+        <div class="badge2" style="background:${meta.color}">${meta.code}</div>
+        <div class="cat-info">
+          <div class="cat-name">${nameOnly}</div>
+          <div class="cat-sub">${meta.sub}</div>
+        </div>
+        <div class="cat-right">
+          <div class="cat-count">${s.total.toLocaleString()}</div>
+          <div class="cat-count-lbl">รายการ</div>
+          ${s.notReady > 0 ? `<div class="cat-issue">⚠️ ${s.notReady} ไม่พร้อม</div>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  app.innerHTML = `
+    <button class="scan-btn" id="scanBtn">📷 สแกน QR หน้าเครื่อง เพื่อบันทึกผลตรวจเช็ก</button>
+    <div class="strip">${stripHtml}</div>
+    <div class="section-title">เลือกระบบ</div>
+    ${listHtml}
+  `;
+  document.getElementById("scanBtn").addEventListener("click", startQrScan);
+  app.querySelectorAll("[data-cat]").forEach(el=>{
+    el.addEventListener("click", ()=> renderMachineList(el.getAttribute("data-cat")));
+  });
+}
+
+function renderMachineList(category){
+  currentCategory = category;
+  const app = document.getElementById("app");
+  const meta = CAT_META[category] || { code:"?", color:"#888" };
+  const nameOnly = category.replace(/^หมวดที่ \d+\s*/, "");
+
+  function listFor(items){
+    return items.map(m => {
       const full = m.notReady === 0;
-      html += `
-        <div class="mrow" data-cat="${m.category}" data-name="${m.name}">
+      return `
+        <div class="mrow" data-name="${m.name}">
           <div>
             <div class="name">${m.name}</div>
             <div class="qty">พร้อมใช้ ${m.ready}/${m.total}</div>
           </div>
-          <span class="badge ${full?'full':'partial'}">${full ? '✅ พร้อมใช้ครบ' : '⚠️ '+m.notReady+' ไม่พร้อม'}</span>
+          <span class="pill ${full?'full':'partial'}">${full ? '✅ พร้อมใช้ครบ' : '⚠️ '+m.notReady+' ไม่พร้อม'}</span>
         </div>
       `;
-    });
-  });
-  app.innerHTML = html;
+    }).join("");
+  }
 
-  app.querySelectorAll(".mrow").forEach(el=>{
-    el.addEventListener("click", ()=> openMachineModal(el.getAttribute("data-cat"), el.getAttribute("data-name")));
+  const items = allMachines.filter(m=>m.category===category);
+  app.innerHTML = `
+    <a class="back-link" id="backLink">← เลือกหมวดอื่น</a>
+    <div class="section-title" style="display:flex;align-items:center;gap:10px;">
+      <span class="badge2" style="width:28px;height:28px;font-size:10px;background:${meta.color}">${meta.code}</span>
+      ${nameOnly}
+    </div>
+    <input type="text" id="searchBox" placeholder="ค้นหาชื่อเครื่องจักรในหมวดนี้...">
+    <div id="machineListArea">${listFor(items)}</div>
+  `;
+  document.getElementById("backLink").addEventListener("click", renderCategoryPicker);
+  document.querySelectorAll(".mrow").forEach(el=>{
+    el.addEventListener("click", ()=> openMachineModal(category, el.getAttribute("data-name")));
   });
   document.getElementById("searchBox").addEventListener("input", (e)=>{
     const q = e.target.value.trim().toLowerCase();
-    render(q ? allMachines.filter(m=>m.name.toLowerCase().includes(q)) : allMachines);
+    const filtered = q ? items.filter(m=>m.name.toLowerCase().includes(q)) : items;
+    document.getElementById("machineListArea").innerHTML = listFor(filtered);
+    document.querySelectorAll(".mrow").forEach(el=>{
+      el.addEventListener("click", ()=> openMachineModal(category, el.getAttribute("data-name")));
+    });
   });
 }
 
+// โหมดดูอย่างเดียวจากการกดเลือกในลิสต์ — ดูสถานะ+ปิดงานปัญหาเดิมได้ แต่
+// "บันทึกผลตรวจเช็กใหม่" ต้องสแกน QR หน้าเครื่องเท่านั้น (ยืนยันว่ามาจริง)
 async function openMachineModal(category, name){
   const modal = document.getElementById("modal");
   document.getElementById("modalBg").classList.add("show");
@@ -139,7 +288,7 @@ async function openMachineModal(category, name){
   modal.innerHTML = `
     <button class="modal-close" id="closeModalBtn">✕</button>
     <h3>${name}</h3>
-    <div class="sub">${category} · พร้อมใช้ ${m.ready}/${m.total}</div>
+    <div class="sub">${category.replace(/^หมวดที่ \d+\s*/, "")} · พร้อมใช้ ${m.ready}/${m.total}</div>
     <div id="issuesList">
       ${issues.length ? issues.map(is => `
         <div class="issue-card">
@@ -149,44 +298,127 @@ async function openMachineModal(category, name){
         </div>
       `).join("") : "<p style='font-size:13px;color:var(--muted)'>ไม่มีปัญหาค้างอยู่</p>"}
     </div>
-    <label>จำนวนที่ไม่พร้อมใช้งาน (เพิ่มใหม่)</label>
-    <input type="number" id="qtyInput" min="1" value="1">
-    <label>รายละเอียดปัญหา</label>
-    <textarea id="detailInput" placeholder="ระบุอาการ/ปัญหาที่พบ..."></textarea>
-    <label>ผู้รับผิดชอบ/บริษัท (ถ้ามี)</label>
-    <input type="text" id="vendorInput" placeholder="เช่น บ.Johnson Controls">
-    <label>ผู้แจ้ง</label>
-    <input type="text" id="reporterInput" value="${localStorage.getItem('op_last_recorder')||''}">
-    <button class="report-btn" id="reportBtn">📤 แจ้งปัญหาใหม่</button>
+    <div class="browse-note">
+      🔒 บันทึกผลตรวจเช็กใหม่ต้องสแกน QR หน้าเครื่องเท่านั้น เพื่อยืนยันว่าช่างเข้าปฏิบัติงานจริง
+      <br><button class="scan-now-btn" id="scanNowBtn">📷 สแกนตอนนี้</button>
+    </div>
   `;
   document.getElementById("closeModalBtn").addEventListener("click", ()=>{ document.getElementById("modalBg").classList.remove("show"); });
-  document.getElementById("reportBtn").addEventListener("click", ()=> submitIssue(category, name));
+  document.getElementById("scanNowBtn").addEventListener("click", ()=>{ document.getElementById("modalBg").classList.remove("show"); startQrScan(); });
   modal.querySelectorAll(".close-btn").forEach(btn=>{
     btn.addEventListener("click", ()=> closeIssue(btn.getAttribute("data-row"), category, name));
   });
 }
 
-async function submitIssue(category, name){
-  const qty = document.getElementById("qtyInput").value;
-  const detail = document.getElementById("detailInput").value.trim();
-  const vendor = document.getElementById("vendorInput").value.trim();
-  const reporter = document.getElementById("reporterInput").value.trim();
-  if (!detail){ showToast("กรุณาระบุรายละเอียดปัญหา", "err"); return; }
-  if (!reporter){ showToast("กรุณาระบุชื่อผู้แจ้ง", "err"); return; }
-  localStorage.setItem("op_last_recorder", reporter);
+// ---------- ฟอร์มเช็กชีตตรวจเช็ก — เข้าได้จากการสแกน QR เท่านั้น ----------
+function renderCheckSheet(category, name, verified){
+  currentCategory = category;
+  const app = document.getElementById("app");
+  const m = allMachines.find(x=>x.category===category && x.name===name);
+  const meta = CAT_META[category] || { code:"?", color:"#888" };
 
+  app.innerHTML = `
+    <a class="back-link" id="backLink">← เลือกหมวดอื่น</a>
+    ${verified ? `<div class="verified-badge">✅ ยืนยันจากการสแกน QR หน้าเครื่อง</div>` : ""}
+    <div class="section-title" style="display:flex;align-items:center;gap:10px;">
+      <span class="badge2" style="width:28px;height:28px;font-size:10px;background:${meta.color}">${meta.code}</span>
+      ${name}
+    </div>
+    <div style="color:var(--muted);font-size:12px;margin:-8px 0 16px;">${category.replace(/^หมวดที่ \d+\s*/, "")} · พร้อมใช้ ${m.ready}/${m.total}</div>
+
+    <label>ความสะอาด</label>
+    <div class="toggle-pair" id="tp_cleanliness">
+      <button type="button" class="tbtn" data-field="cleanliness" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn" data-field="cleanliness" data-val="ไม่ปกติ">ไม่ปกติ</button>
+    </div>
+    <label>เสียง/การสั่นสะเทือน</label>
+    <div class="toggle-pair" id="tp_noise">
+      <button type="button" class="tbtn" data-field="noise" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn" data-field="noise" data-val="ผิดปกติ">ผิดปกติ</button>
+    </div>
+    <label>การทำงานเมื่อทดสอบ</label>
+    <div class="toggle-pair" id="tp_testRun">
+      <button type="button" class="tbtn" data-field="testRun" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn" data-field="testRun" data-val="ผิดปกติ">ผิดปกติ</button>
+    </div>
+
+    <label style="margin-top:18px;">สถานะโดยรวม</label>
+    <div class="toggle-pair" id="tp_overall">
+      <button type="button" class="tbtn ok" data-field="overall" data-val="พร้อมใช้งาน">✅ พร้อมใช้งาน</button>
+      <button type="button" class="tbtn bad" data-field="overall" data-val="ไม่พร้อมใช้งาน">⚠️ ไม่พร้อมใช้งาน</button>
+    </div>
+
+    <div id="issueFields" style="display:none;">
+      <label>จำนวนที่ไม่พร้อมใช้งาน</label>
+      <input type="number" id="qtyInput" min="1" value="1">
+      <label>รายละเอียดปัญหา</label>
+      <textarea id="detailInput" placeholder="ระบุอาการ/ปัญหาที่พบ..."></textarea>
+      <label>ผู้รับผิดชอบ/บริษัท (ถ้ามี)</label>
+      <input type="text" id="vendorInput" placeholder="เช่น บ.Johnson Controls">
+    </div>
+
+    <label>ผู้ตรวจ</label>
+    <input type="text" id="inspectorInput" value="${localStorage.getItem('op_last_recorder')||''}">
+
+    <button class="report-btn" id="submitCheckBtn" style="background:var(--green);">📤 บันทึกผลตรวจเช็ก</button>
+  `;
+  document.getElementById("backLink").addEventListener("click", renderCategoryPicker);
+
+  const fieldState = {};
+  app.querySelectorAll(".tbtn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const field = btn.getAttribute("data-field");
+      const val = btn.getAttribute("data-val");
+      fieldState[field] = val;
+      app.querySelectorAll(`.tbtn[data-field="${field}"]`).forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      if (field === "overall"){
+        document.getElementById("issueFields").style.display = (val === "ไม่พร้อมใช้งาน") ? "block" : "none";
+      }
+    });
+  });
+
+  document.getElementById("submitCheckBtn").addEventListener("click", ()=> submitCheckSheet(category, name, fieldState));
+}
+
+async function submitCheckSheet(category, name, fieldState){
+  const inspector = document.getElementById("inspectorInput").value.trim();
+  if (!fieldState.cleanliness || !fieldState.noise || !fieldState.testRun){ showToast("กรุณาเลือกผลตรวจให้ครบทุกข้อ", "err"); return; }
+  if (!fieldState.overall){ showToast("กรุณาเลือกสถานะโดยรวม", "err"); return; }
+  if (!inspector){ showToast("กรุณาระบุชื่อผู้ตรวจ", "err"); return; }
+  let detail = "", vendor = "", qty = 1;
+  if (fieldState.overall === "ไม่พร้อมใช้งาน"){
+    detail = document.getElementById("detailInput").value.trim();
+    vendor = document.getElementById("vendorInput").value.trim();
+    qty = document.getElementById("qtyInput").value;
+    if (!detail){ showToast("กรุณาระบุรายละเอียดปัญหา", "err"); return; }
+  }
+  localStorage.setItem("op_last_recorder", inspector);
+
+  const btn = document.getElementById("submitCheckBtn");
+  btn.disabled = true; btn.textContent = "กำลังบันทึก...";
   try{
     const resp = await fetch(CONFIG.GAS_URL, {
       method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({ action:"machine_report", category, name, qty, detail, vendor, reporter })
+      body: JSON.stringify({
+        action:"machine_checksheet", category, name,
+        cleanliness: fieldState.cleanliness, noise: fieldState.noise, testRun: fieldState.testRun,
+        overall: fieldState.overall, qty, detail, vendor, inspector
+      })
     });
     const data = await resp.json();
     if (data.status === "ok"){
-      showToast("แจ้งปัญหาสำเร็จ", "ok");
-      document.getElementById("modalBg").classList.remove("show");
-      init();
-    } else { showToast(data.message || "เกิดข้อผิดพลาด", "err"); }
-  }catch(e){ showToast("เชื่อมต่อไม่สำเร็จ", "err"); }
+      showToast("บันทึกผลตรวจเช็กสำเร็จ", "ok");
+      history.replaceState(null, "", location.pathname);
+      setTimeout(()=>{ location.href = location.pathname; }, 1200);
+    } else {
+      showToast(data.message || "เกิดข้อผิดพลาด", "err");
+      btn.disabled = false; btn.textContent = "📤 บันทึกผลตรวจเช็ก";
+    }
+  }catch(e){
+    showToast("เชื่อมต่อไม่สำเร็จ", "err");
+    btn.disabled = false; btn.textContent = "📤 บันทึกผลตรวจเช็ก";
+  }
 }
 
 async function closeIssue(rowIndex, category, name){
@@ -202,10 +434,72 @@ async function closeIssue(rowIndex, category, name){
     if (data.status === "ok"){
       showToast("ปิดงานเรียบร้อย", "ok");
       document.getElementById("modalBg").classList.remove("show");
-      init();
+      await refreshAndStay();
     } else { showToast(data.message || "เกิดข้อผิดพลาด", "err"); }
   }catch(e){ showToast("เชื่อมต่อไม่สำเร็จ", "err"); }
 }
+
+// โหลดข้อมูลใหม่แล้วกลับไปหน้าเดิมที่ค้างอยู่ (หมวดที่กำลังดู หรือหน้าเลือกหมวด)
+async function refreshAndStay(){
+  try{
+    const resp = await fetch(CONFIG.GAS_URL + "?action=machines");
+    allMachines = await resp.json();
+  }catch(e){}
+  if (currentCategory) renderMachineList(currentCategory);
+  else renderCategoryPicker();
+}
+
+// ---------- QR scanner ----------
+let qrStream = null;
+let qrRAF = null;
+async function startQrScan(){
+  const overlay = document.getElementById("qrOverlay");
+  const video = document.getElementById("qrVideo");
+  const hint = document.getElementById("qrHint");
+  overlay.classList.add("show");
+  try{
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = qrStream;
+    await video.play();
+    hint.textContent = "ส่องกล้องไปที่ QR code หน้าเครื่อง";
+    scanFrame();
+  }catch(e){
+    hint.textContent = "เปิดกล้องไม่สำเร็จ — ตรวจสอบสิทธิ์การใช้กล้อง";
+  }
+}
+function stopQrScan(){
+  if (qrRAF) cancelAnimationFrame(qrRAF);
+  if (qrStream) qrStream.getTracks().forEach(t=>t.stop());
+  qrStream = null;
+  document.getElementById("qrOverlay").classList.remove("show");
+}
+function scanFrame(){
+  const video = document.getElementById("qrVideo");
+  if (!video.videoWidth){ qrRAF = requestAnimationFrame(scanFrame); return; }
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height);
+  if (code && code.data){ handleQrDecoded(code.data); return; }
+  qrRAF = requestAnimationFrame(scanFrame);
+}
+function handleQrDecoded(text){
+  let cat = null, name = null;
+  try{
+    const url = new URL(text);
+    cat = url.searchParams.get("cat");
+    name = url.searchParams.get("name");
+  }catch(e){}
+  stopQrScan();
+  if (cat && name && allMachines.some(m=>m.category===cat && m.name===name)){
+    renderCheckSheet(cat, name, true);
+  } else {
+    showToast("QR นี้ไม่ตรงกับเครื่องจักรในระบบ", "err");
+  }
+}
+document.getElementById("qrCloseBtn").addEventListener("click", stopQrScan);
 
 init();
 </script>
