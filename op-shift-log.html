@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึกกะ OP</title>
+<style>
+  :root{ --navy:#0e2a3d; --teal:#0f7a72; --green:#1c9c63; --red:#c0392b; --line:#e4e4e0; --muted:#6b7178; --bg:#f6f6f2; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Sarabun","Tahoma",sans-serif;background:var(--bg);color:var(--navy);}
+  .topbar{background:var(--navy);color:#fff;padding:16px 18px;}
+  .topbar h1{font-size:16px;margin:0 0 2px;}
+  .topbar a{color:#fff;opacity:.75;font-size:12px;text-decoration:none;}
+  .wrap{max-width:560px;margin:0 auto;padding:16px;padding-bottom:100px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .card h2{font-size:14.5px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+  label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;margin-top:12px;}
+  label:first-child{margin-top:0;}
+  input[type="text"],input[type="number"],select,textarea{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;font-family:inherit;
+  }
+  textarea{min-height:60px;resize:vertical;}
+  .field-row{display:flex;gap:10px;}
+  .field-row > div{flex:1;}
+  .toggle-pair{display:flex;gap:8px;}
+  .toggle-btn{flex:1;padding:10px 6px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);}
+  .toggle-btn.active.on{background:#e3f6ea;border-color:var(--green);color:var(--green);}
+  .toggle-btn.active.off{background:#f1f1ee;border-color:var(--muted);color:var(--navy);}
+  .machine-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+  .machine-row:last-child{border-bottom:none;}
+  .machine-row .name{font-size:13.5px;font-weight:600;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .footer-bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;}
+  .footer-bar .inner{max-width:560px;margin:0 auto;}
+  .submit-btn{width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;}
+  .toast.show{opacity:1;}
+  .toast.err{background:var(--red);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>📋 บันทึกกะ OP</h1>
+  <a href="op-home.html">← กลับหน้าแรก</a>
+</div>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = { GAS_URL: "" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
+
+const MACHINES_ONOFF = ["Chiller","Cooling Tower","Primary Chiller Water Pump","Secondary Chiller Water Pump","Condenser Water Pump"];
+let onoffState = {};
+
+function showToast(msg, kind){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (kind==="err" ? " err" : "");
+  setTimeout(()=> el.classList.remove("show"), 2600);
+}
+function todayTime(){
+  const d = new Date();
+  const h = d.getHours();
+  if (h < 8) return "ดึก";
+  if (h < 16) return "เช้า";
+  return "บ่าย";
+}
+
+async function init(){
+  render();
+  if (CONFIG.GAS_URL){
+    try{
+      const resp = await fetch(CONFIG.GAS_URL + "?action=last_shift_meters");
+      const data = await resp.json();
+      if (data.found){
+        document.getElementById("meterElectric").placeholder = "ครั้งก่อน: " + data.meterElectric;
+        document.getElementById("meterWater").placeholder = "ครั้งก่อน: " + data.meterWater;
+        document.getElementById("meterCooling").placeholder = "ครั้งก่อน: " + data.meterCooling;
+      }
+    }catch(e){ console.error(e); }
+  }
+}
+
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="card">
+      <h2>ข้อมูลผู้บันทึก</h2>
+      <label>กะ</label>
+      <select id="shift">
+        <option value="เช้า">เช้า</option>
+        <option value="บ่าย">บ่าย</option>
+        <option value="ดึก">ดึก</option>
+      </select>
+      <label>ผู้บันทึก</label>
+      <input type="text" id="recorder" placeholder="ชื่อ-นามสกุล" value="${localStorage.getItem('op_last_recorder')||''}">
+    </div>
+
+    <div class="card">
+      <h2>สภาพอากาศ / Chiller</h2>
+      <div class="field-row">
+        <div><label>อุณหภูมิภายนอก (°C)</label><input type="text" id="outsideTemp" inputmode="decimal"></div>
+        <div><label>ความชื้น (% rh)</label><input type="text" id="humidity" inputmode="decimal"></div>
+      </div>
+      <label>Setpoint Chiller (°F)</label>
+      <input type="text" id="chillerSetpoint" inputmode="decimal">
+    </div>
+
+    <div class="card">
+      <h2>สถานะเครื่องจักรหลัก</h2>
+      <div id="machineToggles"></div>
+    </div>
+
+    <div class="card">
+      <h2>มิเตอร์หลัก</h2>
+      <label>มิเตอร์ไฟฟ้า (kWh)</label>
+      <input type="text" id="meterElectric" inputmode="decimal">
+      <label>มิเตอร์ประปา (m³)</label>
+      <input type="text" id="meterWater" inputmode="decimal">
+      <label>มิเตอร์คูลลิ่ง (m³)</label>
+      <input type="text" id="meterCooling" inputmode="decimal">
+      <div class="hint">ช่องกรอกจะโชว์ค่าครั้งก่อนไว้ในพื้นหลังให้เทียบ</div>
+    </div>
+
+    <div class="card">
+      <h2>ความพร้อมใช้ระบบ</h2>
+      <label>Water Treatment System</label>
+      <input type="text" id="waterTreatment" placeholder="เช่น ปกติ, Normal">
+      <label>Fire Extinguishing System</label>
+      <input type="text" id="fireExtinguishing" placeholder="เช่น ปกติ, Normal">
+      <label>Medical Gas (psig)</label>
+      <input type="text" id="medicalGas" placeholder="ระบุค่าแรงดัน">
+    </div>
+
+    <div class="card">
+      <h2>Generator</h2>
+      <div class="field-row">
+        <div>
+          <label>สถานะ</label>
+          <select id="generatorStatus"><option value="OFF">OFF</option><option value="ON">ON</option></select>
+        </div>
+        <div><label>kW</label><input type="text" id="generatorKw" inputmode="decimal"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ปั๊มสุขาภิบาล</h2>
+      <label>Submersible Drain Pump</label>
+      <select id="subDrain"><option value="Normal">Normal</option><option value="Abnormal">Abnormal</option></select>
+      <label>Submersible Soil Pump</label>
+      <select id="subSoil"><option value="Normal">Normal</option><option value="Abnormal">Abnormal</option></select>
+      <label>Submersible Sewage Pump</label>
+      <select id="subSewage"><option value="Normal">Normal</option><option value="Abnormal">Abnormal</option></select>
+    </div>
+
+    <div class="card">
+      <h2>หมายเหตุ</h2>
+      <textarea id="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+    </div>
+
+    <div class="footer-bar">
+      <div class="inner">
+        <button class="submit-btn" id="submitBtn">บันทึกกะ</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("shift").value = todayTime();
+
+  const togglesEl = document.getElementById("machineToggles");
+  onoffState = {};
+  togglesEl.innerHTML = MACHINES_ONOFF.map(m => `
+    <div class="machine-row">
+      <div class="name">${m}</div>
+      <div class="toggle-pair" style="max-width:160px;">
+        <button type="button" class="toggle-btn on" id="mc_${m}_on" onclick="setOnOff('${m}','ON')">ON</button>
+        <button type="button" class="toggle-btn off" id="mc_${m}_off" onclick="setOnOff('${m}','OFF')">OFF</button>
+      </div>
+    </div>
+  `).join("");
+
+  document.getElementById("submitBtn").addEventListener("click", onSubmit);
+}
+
+function setOnOff(machine, val){
+  onoffState[machine] = val;
+  document.getElementById("mc_"+machine+"_on").classList.toggle("active", val==="ON");
+  document.getElementById("mc_"+machine+"_on").classList.toggle("on", val==="ON");
+  document.getElementById("mc_"+machine+"_off").classList.toggle("active", val==="OFF");
+  document.getElementById("mc_"+machine+"_off").classList.toggle("off", val==="OFF");
+}
+
+async function onSubmit(){
+  const recorder = document.getElementById("recorder").value.trim();
+  if (!recorder){ showToast("กรุณาระบุชื่อผู้บันทึก", "err"); return; }
+  const missing = MACHINES_ONOFF.filter(m => !onoffState[m]);
+  if (missing.length){ showToast("กรุณาเลือกสถานะ ON/OFF ให้ครบทุกเครื่อง", "err"); return; }
+  localStorage.setItem("op_last_recorder", recorder);
+
+  const machineStatus = MACHINES_ONOFF.map(m => ({ name: m, status: onoffState[m] }));
+
+  const payload = {
+    action: "shift_submit",
+    shift: document.getElementById("shift").value,
+    recorder,
+    outsideTemp: document.getElementById("outsideTemp").value.trim(),
+    humidity: document.getElementById("humidity").value.trim(),
+    chillerSetpoint: document.getElementById("chillerSetpoint").value.trim(),
+    machineStatus,
+    meterElectric: document.getElementById("meterElectric").value.trim(),
+    meterWater: document.getElementById("meterWater").value.trim(),
+    meterCooling: document.getElementById("meterCooling").value.trim(),
+    waterTreatment: document.getElementById("waterTreatment").value.trim(),
+    fireExtinguishing: document.getElementById("fireExtinguishing").value.trim(),
+    medicalGas: document.getElementById("medicalGas").value.trim(),
+    generatorStatus: document.getElementById("generatorStatus").value,
+    generatorKw: document.getElementById("generatorKw").value.trim(),
+    subDrain: document.getElementById("subDrain").value,
+    subSoil: document.getElementById("subSoil").value,
+    subSewage: document.getElementById("subSewage").value,
+    note: document.getElementById("note").value.trim()
+  };
+
+  if (!CONFIG.GAS_URL){ showToast("ยังไม่ได้ตั้งค่า GAS_URL", "err"); return; }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true; btn.textContent = "กำลังบันทึก...";
+  try{
+    const resp = await fetch(CONFIG.GAS_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload) });
+    const data = await resp.json();
+    if (data.status === "ok"){
+      showToast("บันทึกกะสำเร็จ", "ok");
+      setTimeout(()=>{ location.reload(); }, 1200);
+    } else {
+      showToast(data.message || "เกิดข้อผิดพลาด", "err");
+      btn.disabled = false; btn.textContent = "บันทึกกะ";
+    }
+  }catch(e){
+    showToast("เชื่อมต่อไม่สำเร็จ ลองใหม่อีกครั้ง", "err");
+    btn.disabled = false; btn.textContent = "บันทึกกะ";
+  }
+}
+
+init();
+</script>
+</body>
+</html>

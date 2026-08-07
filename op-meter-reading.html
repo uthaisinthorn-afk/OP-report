@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>มิเตอร์ไฟฟ้า-ประปา</title>
+<style>
+  :root{ --navy:#0e2a3d; --teal:#0f7a72; --green:#1c9c63; --red:#c0392b; --line:#e4e4e0; --muted:#6b7178; --bg:#f6f6f2; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Sarabun","Tahoma",sans-serif;background:var(--bg);color:var(--navy);}
+  .topbar{background:var(--navy);color:#fff;padding:16px 18px;}
+  .topbar h1{font-size:16px;margin:0 0 2px;}
+  .topbar a{color:#fff;opacity:.75;font-size:12px;text-decoration:none;}
+  .wrap{max-width:520px;margin:0 auto;padding:16px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .point-list{margin-bottom:6px;}
+  .point-row{
+    display:flex;justify-content:space-between;align-items:center;padding:11px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .point-row:last-child{border-bottom:none;}
+  .point-row .name{font-size:14px;font-weight:700;}
+  .point-row .last{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;margin-top:14px;}
+  label:first-child{margin-top:0;}
+  input[type="text"],input[type="number"],textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;font-family:inherit;}
+  textarea{min-height:50px;}
+  .compare-box{background:var(--bg);border-radius:10px;padding:12px;font-size:13px;margin-top:10px;}
+  .compare-box .diff{font-weight:800;font-size:16px;color:var(--teal);}
+  .submit-btn{width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:16px;}
+  .back-link{display:inline-block;margin-bottom:12px;color:var(--muted);font-size:13px;text-decoration:none;cursor:pointer;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;}
+  .toast.show{opacity:1;}
+  .toast.err{background:var(--red);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>🔢 มิเตอร์ไฟฟ้า-ประปา</h1>
+  <a href="op-home.html">← กลับหน้าแรก</a>
+</div>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = { GAS_URL: "" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
+let points = [];
+
+function showToast(msg, kind){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (kind==="err" ? " err" : "");
+  setTimeout(()=> el.classList.remove("show"), 2600);
+}
+
+async function init(){
+  if (!CONFIG.GAS_URL){ document.getElementById("app").innerHTML = "<p>⚠️ ยังไม่ได้ตั้งค่า GAS_URL ในไฟล์นี้</p>"; return; }
+  document.getElementById("app").innerHTML = "<p>⏳ กำลังโหลด...</p>";
+  try{
+    const resp = await fetch(CONFIG.GAS_URL + "?action=meter_points");
+    points = await resp.json();
+    renderList();
+  }catch(e){
+    document.getElementById("app").innerHTML = "<p>เชื่อมต่อไม่สำเร็จ ลองรีเฟรชอีกครั้ง</p>";
+  }
+}
+
+function renderList(){
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="card">
+      <div class="point-list" id="pointList">
+        ${points.map(p => `
+          <div class="point-row" data-code="${p.code}">
+            <div>
+              <div class="name">${p.name}</div>
+              <div class="last">หน่วย: ${p.unit}</div>
+            </div>
+            <div>›</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  document.querySelectorAll(".point-row").forEach(el=>{
+    el.addEventListener("click", ()=> openPoint(el.getAttribute("data-code")));
+  });
+}
+
+async function openPoint(code){
+  const point = points.find(p=>p.code===code);
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="card">⏳ กำลังโหลด...</div>`;
+
+  let last = { found:false };
+  try{
+    const resp = await fetch(CONFIG.GAS_URL + "?action=meter_last&code=" + encodeURIComponent(code));
+    last = await resp.json();
+  }catch(e){}
+
+  app.innerHTML = `
+    <a class="back-link" id="backLink">← เลือกจุดมิเตอร์อื่น</a>
+    <div class="card">
+      <div style="font-size:16px;font-weight:800;margin-bottom:2px;">${point.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">หน่วย: ${point.unit}${last.found ? " · ค่าล่าสุด "+last.reading+" ("+last.date+")" : " · ยังไม่เคยบันทึกค่ามาก่อน"}</div>
+
+      <label>ค่ามิเตอร์ปัจจุบัน</label>
+      <input type="text" id="readingInput" inputmode="decimal" placeholder="กรอกค่าที่อ่านได้">
+      <div id="compareBox"></div>
+
+      <label>ผู้บันทึก</label>
+      <input type="text" id="recorderInput" value="${localStorage.getItem('op_last_recorder')||''}">
+      <label>หมายเหตุ (ถ้ามี)</label>
+      <textarea id="noteInput" placeholder="เช่น เหตุการณ์ที่ทำให้ค่าผิดปกติ..."></textarea>
+
+      <button class="submit-btn" id="submitBtn">บันทึกค่ามิเตอร์</button>
+    </div>
+  `;
+  document.getElementById("backLink").addEventListener("click", renderList);
+  document.getElementById("readingInput").addEventListener("input", ()=>{
+    const val = parseFloat(document.getElementById("readingInput").value);
+    const box = document.getElementById("compareBox");
+    if (last.found && !isNaN(val)){
+      const diff = val - Number(last.reading);
+      box.innerHTML = `<div class="compare-box">ส่วนต่างจากครั้งก่อน: <span class="diff">${diff.toFixed(2)} ${point.unit}</span></div>`;
+    } else {
+      box.innerHTML = "";
+    }
+  });
+  document.getElementById("submitBtn").addEventListener("click", ()=> submitReading(code));
+}
+
+async function submitReading(code){
+  const reading = document.getElementById("readingInput").value.trim();
+  const recorder = document.getElementById("recorderInput").value.trim();
+  if (!reading || isNaN(parseFloat(reading))){ showToast("กรุณากรอกค่ามิเตอร์เป็นตัวเลข", "err"); return; }
+  if (!recorder){ showToast("กรุณาระบุชื่อผู้บันทึก", "err"); return; }
+  localStorage.setItem("op_last_recorder", recorder);
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true; btn.textContent = "กำลังบันทึก...";
+  try{
+    const resp = await fetch(CONFIG.GAS_URL, {
+      method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({ action:"meter_submit", code, reading, recorder, note: document.getElementById("noteInput").value.trim() })
+    });
+    const data = await resp.json();
+    if (data.status === "ok"){
+      showToast("บันทึกค่ามิเตอร์สำเร็จ", "ok");
+      setTimeout(renderList, 1000);
+    } else {
+      showToast(data.message || "เกิดข้อผิดพลาด", "err");
+      btn.disabled = false; btn.textContent = "บันทึกค่ามิเตอร์";
+    }
+  }catch(e){
+    showToast("เชื่อมต่อไม่สำเร็จ", "err");
+    btn.disabled = false; btn.textContent = "บันทึกค่ามิเตอร์";
+  }
+}
+
+init();
+</script>
+</body>
+</html>

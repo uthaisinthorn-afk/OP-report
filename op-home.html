@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OP App — แผนกปฏิบัติการ</title>
+<style>
+  :root{ --navy:#0e2a3d; --teal:#0f7a72; --line:#e4e4e0; --muted:#6b7178; --bg:#f6f6f2; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Sarabun","Tahoma",sans-serif;background:var(--bg);color:var(--navy);}
+  .topbar{background:var(--navy);color:#fff;padding:20px 18px;}
+  .topbar h1{font-size:19px;margin:0 0 2px;}
+  .topbar .sub{font-size:12.5px;opacity:.7;}
+  .wrap{max-width:480px;margin:0 auto;padding:20px 16px;}
+  .menu-card{
+    display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:18px;margin-bottom:14px;text-decoration:none;color:inherit;
+  }
+  .menu-card .icon{font-size:30px;}
+  .menu-card .title{font-size:15.5px;font-weight:700;}
+  .menu-card .desc{font-size:12.5px;color:var(--muted);margin-top:2px;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>🏢 OP App — แผนกปฏิบัติการ</h1>
+    <div class="sub">อาคารภูมิสิริมังคลานุสรณ์</div>
+  </div>
+  <div class="wrap">
+    <a class="menu-card" href="op-shift-log.html">
+      <div class="icon">📋</div>
+      <div>
+        <div class="title">บันทึกกะ OP</div>
+        <div class="desc">สภาพอากาศ, สถานะเครื่องจักร, มิเตอร์หลัก, ความพร้อมระบบ</div>
+      </div>
+    </a>
+    <a class="menu-card" href="op-machine-readiness.html">
+      <div class="icon">⚙️</div>
+      <div>
+        <div class="title">ความพร้อมใช้งานเครื่องจักร</div>
+        <div class="desc">ดูสถานะพร้อมใช้/ไม่พร้อมใช้ทุกหมวด แจ้ง/ปิดปัญหา</div>
+      </div>
+    </a>
+    <a class="menu-card" href="op-meter-reading.html">
+      <div class="icon">🔢</div>
+      <div>
+        <div class="title">มิเตอร์ไฟฟ้า-ประปา</div>
+        <div class="desc">บันทึกค่ามิเตอร์รายวัน คำนวณส่วนต่างอัตโนมัติ</div>
+      </div>
+    </a>
+  </div>
+</body>
+</html>
