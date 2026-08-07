@@ -41,13 +41,13 @@
 <body>
 <div class="topbar">
   <h1>📋 บันทึกกะ OP</h1>
-  <a href="op-home.html">← กลับหน้าแรก</a>
+  <a href="index.html">← กลับหน้าแรก</a>
 </div>
 <div class="wrap" id="app"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-const CONFIG = { GAS_URL: "" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
+const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycby145sVHKOvQUOvqMC7IogdlWeiVOAz6LVJCxMaePznS6hbHoBvFv_cbwJelW34blLtyA/exec" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
 
 const MACHINES_ONOFF = ["Chiller","Cooling Tower","Primary Chiller Water Pump","Secondary Chiller Water Pump","Condenser Water Pump"];
 let onoffState = {};

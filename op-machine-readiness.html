@@ -71,7 +71,7 @@
   .issue-card .meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
   .close-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;}
   label{display:block;font-size:12.5px;font-weight:700;margin:10px 0 5px;color:var(--muted);}
-  input[type="number"],textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:var(--panel);color:var(--text);}
+  input[type="number"],textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:var(--panel);color:var(--text);}
   textarea{min-height:60px;}
   .report-btn{width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:12px;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:14px;}
   .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
@@ -104,17 +104,16 @@
   .browse-note{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:12.5px;color:var(--muted);margin-top:14px;text-align:center;}
   .scan-now-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:8px;}
   .toggle-pair{display:flex;gap:8px;margin-bottom:4px;}
-  .tbtn{flex:1;padding:11px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;}
-  .tbtn.active{background:rgba(255,255,255,.08);border-color:#666;color:var(--text);}
-  .tbtn.ok.active{background:rgba(28,156,99,.2);border-color:var(--green);color:#3fd38a;}
-  .tbtn.bad.active{background:rgba(229,83,60,.2);border-color:var(--red);color:#ff8266;}
+  .tbtn{flex:1;padding:12px 8px;border-radius:8px;border:2px solid var(--line);background:var(--panel);color:var(--muted);font-size:13.5px;font-weight:800;cursor:pointer;transition:all .15s;}
+  .tbtn.ok.active{background:#1c9c63;border-color:#1c9c63;color:#fff;box-shadow:0 0 0 3px rgba(28,156,99,.25);}
+  .tbtn.bad.active{background:#e5533c;border-color:#e5533c;color:#fff;box-shadow:0 0 0 3px rgba(229,83,60,.25);}
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="eyebrow">Preventive Maintenance</div>
   <h1>ความพร้อมใช้งานเครื่องจักร</h1>
-  <a href="op-home.html">← กลับหน้าแรก</a>
+  <a href="index.html">← กลับหน้าแรก</a>
 </div>
 <div class="wrap" id="app"></div>
 <div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
@@ -150,6 +149,7 @@ const CAT_META = {
 
 let allMachines = [];
 let currentCategory = null;
+let opStaffList = [];
 
 function showToast(msg, kind){
   const el = document.getElementById("toast");
@@ -162,8 +162,12 @@ async function init(){
   document.getElementById("app").innerHTML = "<p style='color:var(--muted)'>⏳ กำลังโหลดข้อมูล...</p>";
   if (!CONFIG.GAS_URL){ document.getElementById("app").innerHTML = "<p>⚠️ ยังไม่ได้ตั้งค่า GAS_URL</p>"; return; }
   try{
-    const resp = await fetch(CONFIG.GAS_URL + "?action=machines");
-    allMachines = await resp.json();
+    const [machinesResp, staffResp] = await Promise.all([
+      fetch(CONFIG.GAS_URL + "?action=machines"),
+      fetch(CONFIG.GAS_URL + "?action=op_staff")
+    ]);
+    allMachines = await machinesResp.json();
+    try{ opStaffList = await staffResp.json(); }catch(e){ opStaffList = []; }
     const params = new URLSearchParams(location.search);
     const cat = params.get("cat");
     const name = params.get("name");
@@ -328,6 +332,7 @@ function renderCheckSheet(category, name, verified){
   const app = document.getElementById("app");
   const m = allMachines.find(x=>x.category===category && x.name===name);
   const meta = CAT_META[category] || { code:"?", color:"#888" };
+  const lastRecorder = localStorage.getItem('op_last_recorder') || "";
 
   app.innerHTML = `
     <a class="back-link" id="backLink">← เลือกหมวดอื่น</a>
@@ -340,18 +345,18 @@ function renderCheckSheet(category, name, verified){
 
     <label>ความสะอาด</label>
     <div class="toggle-pair" id="tp_cleanliness">
-      <button type="button" class="tbtn" data-field="cleanliness" data-val="ปกติ">ปกติ</button>
-      <button type="button" class="tbtn" data-field="cleanliness" data-val="ไม่ปกติ">ไม่ปกติ</button>
+      <button type="button" class="tbtn ok" data-field="cleanliness" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn bad" data-field="cleanliness" data-val="ไม่ปกติ">ไม่ปกติ</button>
     </div>
     <label>เสียง/การสั่นสะเทือน</label>
     <div class="toggle-pair" id="tp_noise">
-      <button type="button" class="tbtn" data-field="noise" data-val="ปกติ">ปกติ</button>
-      <button type="button" class="tbtn" data-field="noise" data-val="ผิดปกติ">ผิดปกติ</button>
+      <button type="button" class="tbtn ok" data-field="noise" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn bad" data-field="noise" data-val="ผิดปกติ">ผิดปกติ</button>
     </div>
     <label>การทำงานเมื่อทดสอบ</label>
     <div class="toggle-pair" id="tp_testRun">
-      <button type="button" class="tbtn" data-field="testRun" data-val="ปกติ">ปกติ</button>
-      <button type="button" class="tbtn" data-field="testRun" data-val="ผิดปกติ">ผิดปกติ</button>
+      <button type="button" class="tbtn ok" data-field="testRun" data-val="ปกติ">ปกติ</button>
+      <button type="button" class="tbtn bad" data-field="testRun" data-val="ผิดปกติ">ผิดปกติ</button>
     </div>
 
     <label style="margin-top:18px;">สถานะโดยรวม</label>
@@ -370,11 +375,19 @@ function renderCheckSheet(category, name, verified){
     </div>
 
     <label>ผู้ตรวจ</label>
-    <input type="text" id="inspectorInput" value="${localStorage.getItem('op_last_recorder')||''}">
+    <select id="inspectorSelect">
+      <option value="">-- เลือกผู้ตรวจ --</option>
+      ${opStaffList.map(n => `<option value="${n}" ${n===lastRecorder?"selected":""}>${n}</option>`).join("")}
+      <option value="__other__" ${(lastRecorder && !opStaffList.includes(lastRecorder))?"selected":""}>อื่นๆ (พิมพ์ชื่อเอง)</option>
+    </select>
+    <input type="text" id="inspectorOther" placeholder="พิมพ์ชื่อผู้ตรวจ" style="display:${(lastRecorder && !opStaffList.includes(lastRecorder))?'block':'none'};margin-top:8px;" value="${(lastRecorder && !opStaffList.includes(lastRecorder))?lastRecorder:''}">
 
     <button class="report-btn" id="submitCheckBtn" style="background:var(--green);">📤 บันทึกผลตรวจเช็ก</button>
   `;
   document.getElementById("backLink").addEventListener("click", renderCategoryPicker);
+  document.getElementById("inspectorSelect").addEventListener("change", (e)=>{
+    document.getElementById("inspectorOther").style.display = (e.target.value === "__other__") ? "block" : "none";
+  });
 
   const fieldState = {};
   app.querySelectorAll(".tbtn").forEach(btn=>{
@@ -394,7 +407,10 @@ function renderCheckSheet(category, name, verified){
 }
 
 async function submitCheckSheet(category, name, fieldState){
-  const inspector = document.getElementById("inspectorInput").value.trim();
+  const selectEl = document.getElementById("inspectorSelect");
+  const inspector = selectEl.value === "__other__"
+    ? document.getElementById("inspectorOther").value.trim()
+    : selectEl.value;
   if (!fieldState.cleanliness || !fieldState.noise || !fieldState.testRun){ showToast("กรุณาเลือกผลตรวจให้ครบทุกข้อ", "err"); return; }
   if (!fieldState.overall){ showToast("กรุณาเลือกสถานะโดยรวม", "err"); return; }
   if (!inspector){ showToast("กรุณาระบุชื่อผู้ตรวจ", "err"); return; }
