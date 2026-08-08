@@ -25,8 +25,15 @@
   .toggle-pair{display:flex;gap:8px;}
   .toggle-btn{flex:1;padding:10px 6px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);}
   .toggle-btn.active.on{background:#e3f6ea;border-color:var(--green);color:var(--green);}
-  .toggle-btn.active.off{background:#f1f1ee;border-color:var(--muted);color:var(--navy);}
+  .toggle-btn.active.off{background:#fdeceb;border-color:var(--red);color:var(--red);}
   .machine-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+  .machine-group{margin-bottom:18px;padding-bottom:6px;border-bottom:2px solid var(--line);}
+  .machine-group:last-child{border-bottom:none;}
+  .group-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
+  .group-title{font-size:14px;font-weight:800;color:var(--navy);}
+  .group-count{font-weight:400;color:var(--muted);font-size:12px;}
+  .group-quick{display:flex;gap:6px;}
+  .quick-btn{background:#eef6f4;border:1px solid var(--teal);color:var(--teal);border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer;}
   .machine-row:last-child{border-bottom:none;}
   .machine-row .name{font-size:13.5px;font-weight:600;}
   .hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
@@ -49,7 +56,13 @@
 <script>
 const CONFIG = { GAS_URL: "https://script.google.com/macros/s/AKfycby145sVHKOvQUOvqMC7IogdlWeiVOAz6LVJCxMaePznS6hbHoBvFv_cbwJelW34blLtyA/exec" }; // <-- ใส่ URL ของ Apps Script Web app หลัง deploy ตรงนี้
 
-const MACHINES_ONOFF = ["Chiller","Cooling Tower","Primary Chiller Water Pump","Secondary Chiller Water Pump","Condenser Water Pump"];
+const MACHINE_GROUPS = [
+  { name: "Chiller", qty: 8 },
+  { name: "Cooling Tower", qty: 8 },
+  { name: "Primary Chiller Water Pump", qty: 8 },
+  { name: "Secondary Chiller Water Pump", qty: 9 },
+  { name: "Condenser Water Pump", qty: 8 }
+];
 let onoffState = {};
 
 function showToast(msg, kind){
@@ -168,35 +181,56 @@ function render(){
 
   const togglesEl = document.getElementById("machineToggles");
   onoffState = {};
-  togglesEl.innerHTML = MACHINES_ONOFF.map(m => `
-    <div class="machine-row">
-      <div class="name">${m}</div>
-      <div class="toggle-pair" style="max-width:160px;">
-        <button type="button" class="toggle-btn on" id="mc_${m}_on" onclick="setOnOff('${m}','ON')">ON</button>
-        <button type="button" class="toggle-btn off" id="mc_${m}_off" onclick="setOnOff('${m}','OFF')">OFF</button>
+  const slug = s => s.replace(/[^a-zA-Z0-9]/g, "_");
+  togglesEl.innerHTML = MACHINE_GROUPS.map(g => `
+    <div class="machine-group">
+      <div class="group-head">
+        <div class="group-title">${g.name} <span class="group-count">(${g.qty} เครื่อง)</span></div>
+        <div class="group-quick">
+          <button type="button" class="quick-btn" onclick="setGroupAll('${g.name}',${g.qty},'ON')">ทั้งหมด ON</button>
+          <button type="button" class="quick-btn" onclick="setGroupAll('${g.name}',${g.qty},'OFF')">ทั้งหมด OFF</button>
+        </div>
       </div>
+      ${Array.from({length:g.qty}, (_,i)=>i+1).map(n => `
+        <div class="machine-row">
+          <div class="name">${g.name} ${n}</div>
+          <div class="toggle-pair" style="max-width:160px;">
+            <button type="button" class="toggle-btn on" id="mc_${slug(g.name)}_${n}_on" onclick="setOnOff('${g.name}',${n},'ON')">ON</button>
+            <button type="button" class="toggle-btn off" id="mc_${slug(g.name)}_${n}_off" onclick="setOnOff('${g.name}',${n},'OFF')">OFF</button>
+          </div>
+        </div>
+      `).join("")}
     </div>
   `).join("");
 
   document.getElementById("submitBtn").addEventListener("click", onSubmit);
 }
 
-function setOnOff(machine, val){
-  onoffState[machine] = val;
-  document.getElementById("mc_"+machine+"_on").classList.toggle("active", val==="ON");
-  document.getElementById("mc_"+machine+"_on").classList.toggle("on", val==="ON");
-  document.getElementById("mc_"+machine+"_off").classList.toggle("active", val==="OFF");
-  document.getElementById("mc_"+machine+"_off").classList.toggle("off", val==="OFF");
+function slugId(s){ return s.replace(/[^a-zA-Z0-9]/g, "_"); }
+
+function setOnOff(machine, n, val){
+  const key = machine + " " + n;
+  onoffState[key] = val;
+  const s = slugId(machine);
+  document.getElementById("mc_"+s+"_"+n+"_on").classList.toggle("active", val==="ON");
+  document.getElementById("mc_"+s+"_"+n+"_on").classList.toggle("on", val==="ON");
+  document.getElementById("mc_"+s+"_"+n+"_off").classList.toggle("active", val==="OFF");
+  document.getElementById("mc_"+s+"_"+n+"_off").classList.toggle("off", val==="OFF");
+}
+
+function setGroupAll(machine, qty, val){
+  for (let n = 1; n <= qty; n++) setOnOff(machine, n, val);
 }
 
 async function onSubmit(){
   const recorder = document.getElementById("recorder").value.trim();
   if (!recorder){ showToast("กรุณาระบุชื่อผู้บันทึก", "err"); return; }
-  const missing = MACHINES_ONOFF.filter(m => !onoffState[m]);
-  if (missing.length){ showToast("กรุณาเลือกสถานะ ON/OFF ให้ครบทุกเครื่อง", "err"); return; }
+  const allKeys = MACHINE_GROUPS.flatMap(g => Array.from({length:g.qty}, (_,i)=> g.name+" "+(i+1)));
+  const missing = allKeys.filter(k => !onoffState[k]);
+  if (missing.length){ showToast("กรุณาเลือกสถานะ ON/OFF ให้ครบทุกเครื่อง (เหลือ "+missing.length+" เครื่อง)", "err"); return; }
   localStorage.setItem("op_last_recorder", recorder);
 
-  const machineStatus = MACHINES_ONOFF.map(m => ({ name: m, status: onoffState[m] }));
+  const machineStatus = allKeys.map(k => ({ name: k, status: onoffState[k] }));
 
   const payload = {
     action: "shift_submit",
